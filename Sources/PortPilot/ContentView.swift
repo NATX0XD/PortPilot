@@ -23,29 +23,26 @@ struct ContentView: View {
     @ObservedObject var model: AppModel
 
     var body: some View {
-        ZStack {
-            background
-            VStack(spacing: 0) {
-                header
-                searchBar
-                if let err = model.lastError { errorBanner(err) }
-                content
-                footer
-            }
+        VStack(spacing: 0) {
+            header
+            searchBar
+            if let err = model.lastError { errorBanner(err) }
+            content
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            footer
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(background)
         .fontDesign(.rounded)
     }
 
     private var background: some View {
-        ZStack {
-            Color(nsColor: .windowBackgroundColor)
-            LinearGradient(
-                colors: [Color(red: 0.04, green: 0.52, blue: 1.0).opacity(0.10),
-                         Color(red: 0.70, green: 0.35, blue: 0.96).opacity(0.12)],
-                startPoint: .topLeading, endPoint: .bottomTrailing)
-        }
-        .ignoresSafeArea()
+        LinearGradient(
+            colors: [Color(red: 0.04, green: 0.52, blue: 1.0).opacity(0.10),
+                     Color(red: 0.70, green: 0.35, blue: 0.96).opacity(0.12)],
+            startPoint: .topLeading, endPoint: .bottomTrailing)
+            .background(Color(nsColor: .windowBackgroundColor))
+            .ignoresSafeArea()
     }
 
     // MARK: Header
@@ -135,25 +132,33 @@ struct ContentView: View {
 
     @ViewBuilder
     private var content: some View {
-        if model.filtered.isEmpty {
+        if model.isScanning && model.services.isEmpty {
+            loadingState
+        } else if model.filtered.isEmpty {
             emptyState
         } else {
             ScrollView {
-                LazyVStack(spacing: 8, pinnedViews: [.sectionHeaders]) {
+                VStack(spacing: 8) {
                     ForEach(model.sections, id: \.title) { section in
-                        Section {
-                            ForEach(section.items) { service in
-                                ServiceRow(service: service, model: model)
-                                    .padding(.horizontal, 14)
-                            }
-                        } header: {
-                            sectionHeader(section.title, count: section.items.count)
+                        sectionHeader(section.title, count: section.items.count)
+                        ForEach(section.items) { service in
+                            ServiceRow(service: service, model: model)
+                                .padding(.horizontal, 14)
                         }
                     }
                 }
-                .padding(.vertical, 6)
+                .padding(.vertical, 8)
             }
         }
+    }
+
+    /// Pretty loading state: a few shimmering skeleton cards while the first scan runs.
+    private var loadingState: some View {
+        VStack(spacing: 8) {
+            ForEach(0..<5, id: \.self) { _ in SkeletonRow() }
+        }
+        .padding(.horizontal, 14).padding(.top, 10)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
     }
 
     private func sectionHeader(_ title: String, count: Int) -> some View {
@@ -272,6 +277,31 @@ struct CircleButton: View {
         .buttonStyle(.plain)
         .frame(width: 28, height: 28)
         .background(Circle().fill(.quaternary))
+    }
+}
+
+// MARK: - Loading skeleton
+
+struct SkeletonRow: View {
+    @State private var pulse = false
+
+    var body: some View {
+        HStack(spacing: 11) {
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .fill(.quaternary).frame(width: 52, height: 34)
+            VStack(alignment: .leading, spacing: 7) {
+                RoundedRectangle(cornerRadius: 4).fill(.quaternary).frame(width: 130, height: 11)
+                RoundedRectangle(cornerRadius: 4).fill(.quaternary).frame(width: 90, height: 8)
+            }
+            Spacer()
+            Circle().fill(.quaternary).frame(width: 26, height: 26)
+        }
+        .padding(.horizontal, 12).padding(.vertical, 10)
+        .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(.regularMaterial))
+        .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(.white.opacity(0.08)))
+        .opacity(pulse ? 0.45 : 1)
+        .animation(.easeInOut(duration: 0.7).repeatForever(autoreverses: true), value: pulse)
+        .onAppear { pulse = true }
     }
 }
 
