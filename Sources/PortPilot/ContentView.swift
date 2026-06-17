@@ -233,6 +233,14 @@ struct ContentView: View {
             .foregroundStyle(model.adminMode ? .white : .primary)
             .help("Scan with admin rights to reveal root/system listeners")
 
+            Button { (NSApp.delegate as? AppDelegate)?.showMainWindow() } label: {
+                Image(systemName: "macwindow").font(.caption.weight(.semibold))
+            }
+            .buttonStyle(.plain)
+            .frame(width: 26, height: 26)
+            .background(Circle().fill(.quaternary))
+            .help("Open the main window")
+
             Button { NSApplication.shared.terminate(nil) } label: {
                 Image(systemName: "power").font(.caption.weight(.semibold))
             }

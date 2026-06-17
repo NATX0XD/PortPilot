@@ -23,14 +23,17 @@ struct PortPilotApp: App {
 /// Creates and manages the real desktop window with AppKit. The SwiftUI `Window` +
 /// `MenuBarExtra` combination does not reliably show a window on this SDK, so we host
 /// the SwiftUI ContentView inside an NSWindow ourselves.
-final class AppDelegate: NSObject, NSApplicationDelegate {
+final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     private var window: NSWindow?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        NSApp.setActivationPolicy(.regular)   // Dock icon + normal app
         AppModel.shared.start()
         showMainWindow()
-        NSApp.activate(ignoringOtherApps: true)
+    }
+
+    /// Closing the window must NOT quit the app — it keeps running in the menu bar.
+    func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
+        false
     }
 
     /// Re-open the window when the user clicks the Dock icon and nothing is visible.
@@ -39,7 +42,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         return true
     }
 
+    /// Window closed → drop the Dock icon and live purely as a menu-bar background app.
+    func windowWillClose(_ notification: Notification) {
+        NSApp.setActivationPolicy(.accessory)
+    }
+
+    /// Shows the desktop window and restores the Dock icon. Callable from the menu bar.
     func showMainWindow() {
+        NSApp.setActivationPolicy(.regular)   // Dock icon + normal app
         if let window {
             window.makeKeyAndOrderFront(nil)
             window.orderFrontRegardless()
@@ -51,6 +61,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             styleMask: [.titled, .closable, .miniaturizable, .resizable],
             backing: .buffered, defer: false)
         win.title = "PortPilot"
+        win.delegate = self
         win.isReleasedWhenClosed = false
         win.isOpaque = true
         win.backgroundColor = .windowBackgroundColor
@@ -64,6 +75,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         win.center()
         win.makeKeyAndOrderFront(nil)
         win.orderFrontRegardless()
+        NSApp.activate(ignoringOtherApps: true)
         window = win
     }
 }
