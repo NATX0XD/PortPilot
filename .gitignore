@@ -1,0 +1,17 @@
+# Build output
+PortPilot
+PortPilot.app/
+*.o
+*.swiftmodule
+.build/
+DerivedData/
+
+# Generated icon intermediates (AppIcon.icns is committed)
+*.iconset/
+icon_*.png
+
+# macOS
+.DS_Store
+
+# Logs
+*.log
