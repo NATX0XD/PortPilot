@@ -23,6 +23,7 @@ struct PortPilotApp: App {
 /// Creates and manages the real desktop window with AppKit. The SwiftUI `Window` +
 /// `MenuBarExtra` combination does not reliably show a window on this SDK, so we host
 /// the SwiftUI ContentView inside an NSWindow ourselves.
+@MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     private var window: NSWindow?
 
