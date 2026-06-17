@@ -34,6 +34,10 @@ PortPilot/
     └── Models.swift              # ServiceInfo + USER/SYSTEM category
 ```
 
+## ดาวน์โหลด (ไม่ต้อง build เอง)
+โหลดไฟล์ `PortPilot.app.zip` จาก **[Releases](https://github.com/NATX0XD/PortPilot/releases/latest)** (Apple Silicon)
+→ แตก zip → ย้าย `PortPilot.app` เข้า `/Applications` → เปิดครั้งแรกให้คลิกขวา → **Open** (แอปเซ็นแบบ ad-hoc ยังไม่ notarize)
+
 ## วิธี build & run
 ```bash
 cd PortPilot
