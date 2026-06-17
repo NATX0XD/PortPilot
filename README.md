@@ -1,31 +1,57 @@
 # PortPilot
 
-แอป macOS สำหรับมอนิเตอร์ services/projects ที่กำลังรันอยู่ — เห็นว่าตัวไหนรัน port อะไร, กด **Restart** (kill แล้วรันคำสั่งเดิมซ้ำ) หรือ **Close** (หยุด process) ได้ มีทั้ง **หน้าต่าง desktop เต็มตัว (มี Dock icon)** และ **menu bar item** ที่มี badge นับจำนวน service ของคุณ
+**English** · [ไทย](README.th.md)
 
-## ฟีเจอร์
-- สแกน listening TCP services ทั้งหมดด้วย `lsof` (auto-refresh ทุก 5 วิ)
-- แสดง port, ชื่อ, PID, protocol, user, uptime, working directory
-- แยกกลุ่ม **Pinned / Your services / System** + ปักหมุดรายการโปรด
-- badge **USER/SYSTEM** แยกจาก path executable (จับ Apple daemon ที่รันใต้ user ได้)
-- **Restart**: ดึง argv จริงผ่าน `KERN_PROCARGS2` แล้ว spawn ใหม่ (ไม่ผ่าน shell — คำสั่งที่มี space/quote ไม่เพี้ยน)
-- **Close**: SIGTERM → SIGKILL พร้อม guard กัน PID reuse (เช็ก lsof ว่ายังถือ port เดิมก่อนยิงสัญญาณ)
-- **inline confirm** ก่อน kill/restart (ใช้ได้ทั้งในหน้าต่างและ menu bar)
-- ตั้งชื่อ project ต่อ port (เก็บถาวร) + ค้นหา/กรอง
-- คลิกขวา: Open `localhost:PORT`, Copy port/PID/URL/command/cwd, Reveal in Finder, Open in Terminal
-- **Show system** (admin): สแกนด้วยสิทธิ์ root เพื่อเห็น listener ของ root/user อื่น (one-shot กัน popup ซ้ำ)
-- freshness indicator "updated Ns ago" + error banner ที่ปิดได้
-- ปุ่ม action enable เฉพาะ process ของคุณ (`.user`) กันเผลอ kill Apple daemon
+A native macOS app for monitoring the services/projects currently running — see which port each one uses, **Restart** them (kill and re-run the original command) or **Close** them (stop the process). It runs as both a **full desktop window (with a Dock icon)** and a **menu-bar item** that shows a badge counting your services.
 
-## โครงสร้างโปรเจกต์
+<!-- Add a screenshot here: ![PortPilot](docs/screenshot.png) -->
+
+## Features
+- Scans all listening TCP services with `lsof` (auto-refresh every 5s)
+- Shows port, name, PID, protocol, user, uptime, and working directory
+- Groups into **Pinned / Your services / System** + pin your favorites
+- **USER/SYSTEM** badges derived from the executable path (catches Apple daemons running under your account)
+- **Restart**: reads the real argv via `KERN_PROCARGS2` and re-spawns directly (no shell — commands with spaces/quotes don't get mangled)
+- **Close**: SIGTERM → SIGKILL with a PID-reuse guard (re-checks via `lsof` that the PID still owns the port before signalling)
+- **Inline confirm** before kill/restart (works in both the window and the menu bar)
+- Name a project per port (persisted) + search/filter
+- Right-click: open `localhost:PORT`, copy port/PID/URL/command/cwd, Reveal in Finder, Open in Terminal
+- **Show system** (admin): scans with root privileges to reveal root/other-user listeners (one prompt per session, cached)
+- Freshness indicator ("updated Ns ago") + a dismissible error banner
+- Action buttons are enabled only for your own (`.user`) processes, to avoid accidentally killing Apple daemons
+
+## Download (no build required)
+Grab `PortPilot.app.zip` from **[Releases](https://github.com/NATX0XD/PortPilot/releases/latest)** (Apple Silicon)
+→ unzip → move `PortPilot.app` to `/Applications` → on first launch right-click → **Open** (the app is ad-hoc signed, not notarized).
+
+## Build & run
+```bash
+cd PortPilot
+./scripts/install.sh        # build + install to /Applications + auto-start at login + open
+# or just build:
+./scripts/build-app.sh && open PortPilot.app
+```
+After launch you'll get the PortPilot window plus a 📡 icon in the menu bar (with a badge counting your services).
+
+## Uninstall
+```bash
+launchctl unload ~/Library/LaunchAgents/com.portpilot.app.plist
+rm ~/Library/LaunchAgents/com.portpilot.app.plist
+rm -rf /Applications/PortPilot.app
+```
+
+## Project structure
 ```
 PortPilot/
-├── Package.swift                 # SPM manifest (สำรอง — ใช้ build-app.sh เป็นหลัก)
+├── Package.swift                 # SPM manifest (fallback — build-app.sh is the primary path)
 ├── README.md
 ├── scripts/
-│   ├── build-app.sh              # คอมไพล์ + ห่อเป็น PortPilot.app
-│   └── Info.plist                # bundle config (LSUIElement = menu bar only)
+│   ├── make-icon.sh / .swift     # generate AppIcon.icns
+│   ├── build-app.sh              # compile + package into PortPilot.app
+│   ├── install.sh                # build + install + login auto-start
+│   └── Info.plist                # bundle config
 └── Sources/PortPilot/
-    ├── PortPilotApp.swift        # @main: Window (desktop) + MenuBarExtra
+    ├── PortPilotApp.swift        # @main: AppKit NSWindow (desktop) + MenuBarExtra
     ├── ContentView.swift         # UI: sections, inline confirm/rename, context menu
     ├── AppModel.swift            # state, auto-refresh, pins, sections, actions
     ├── PortScanner.swift         # parse lsof + ps -> ServiceInfo
@@ -34,27 +60,12 @@ PortPilot/
     └── Models.swift              # ServiceInfo + USER/SYSTEM category
 ```
 
-## ดาวน์โหลด (ไม่ต้อง build เอง)
-โหลดไฟล์ `PortPilot.app.zip` จาก **[Releases](https://github.com/NATX0XD/PortPilot/releases/latest)** (Apple Silicon)
-→ แตก zip → ย้าย `PortPilot.app` เข้า `/Applications` → เปิดครั้งแรกให้คลิกขวา → **Open** (แอปเซ็นแบบ ad-hoc ยังไม่ notarize)
-
-## วิธี build & run
+## Requirements / toolchain
+Needs Command Line Tools whose compiler and SDK match (install fresh with `xcode-select --install`).
+If you hit an error like `this SDK is not supported by the compiler`, reinstall CLT:
 ```bash
-cd PortPilot
-./scripts/install.sh        # build + ติดตั้ง /Applications + auto-start ตอน login + เปิด
-# หรือแค่ build เฉยๆ:
-./scripts/build-app.sh && open PortPilot.app
-```
-หลังเปิดจะมีหน้าต่าง PortPilot + ไอคอน 📡 บน menu bar (มี badge นับจำนวน service ของคุณ)
-
-## ถอนการติดตั้ง
-```bash
-launchctl unload ~/Library/LaunchAgents/com.portpilot.app.plist
-rm ~/Library/LaunchAgents/com.portpilot.app.plist
-rm -rf /Applications/PortPilot.app
+sudo rm -rf /Library/Developer/CommandLineTools && sudo xcode-select --install
 ```
 
-## หมายเหตุ toolchain
-ต้องมี Command Line Tools ที่ compiler/SDK ตรงกัน (ลงสดด้วย `xcode-select --install`).
-ถ้าเจอ error แบบ `this SDK is not supported by the compiler` ให้ลง CLT ใหม่:
-`sudo rm -rf /Library/Developer/CommandLineTools && sudo xcode-select --install`
+## License
+MIT
