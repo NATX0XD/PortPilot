@@ -1,6 +1,7 @@
 # Build output (anchored to repo root so Sources/PortPilot/ is NOT ignored)
 /PortPilot
 /PortPilot.app/
+/PortPilot-*.zip
 *.o
 *.swiftmodule
 .build/
