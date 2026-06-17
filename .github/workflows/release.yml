@@ -1,0 +1,41 @@
+name: Build & Release
+
+# Manual trigger from the GitHub "Actions" tab — builds on a macOS runner and
+# publishes a release. Use this when you want to cut a release without a Mac.
+# (Locally, prefer ./scripts/release.sh — don't use both for the same version.)
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version, e.g. 1.0.1"
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: macos-14   # Apple Silicon
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set version
+        run: |
+          /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString ${{ inputs.version }}" scripts/Info.plist
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion ${{ inputs.version }}" scripts/Info.plist
+
+      - name: Build
+        run: |
+          chmod +x scripts/*.sh
+          ./scripts/build-app.sh
+
+      - name: Zip
+        run: ditto -c -k --sequesterRsrc --keepParent PortPilot.app "PortPilot-${{ inputs.version }}.zip"
+
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ inputs.version }}
+          name: PortPilot v${{ inputs.version }}
+          files: PortPilot-${{ inputs.version }}.zip
+          generate_release_notes: true

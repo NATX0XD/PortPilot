@@ -20,9 +20,16 @@ A native macOS app for monitoring the services/projects currently running — se
 - Freshness indicator ("updated Ns ago") + a dismissible error banner
 - Action buttons are enabled only for your own (`.user`) processes, to avoid accidentally killing Apple daemons
 
-## Download (no build required)
-Grab `PortPilot.app.zip` from **[Releases](https://github.com/NATX0XD/PortPilot/releases/latest)** (Apple Silicon)
-→ unzip → move `PortPilot.app` to `/Applications` → on first launch right-click → **Open** (the app is ad-hoc signed, not notarized).
+## Download & use (no build required)
+1. Go to **[Releases](https://github.com/NATX0XD/PortPilot/releases/latest)** and download `PortPilot-x.y.z.zip` (Apple Silicon).
+2. Unzip and move **PortPilot.app** to `/Applications`.
+3. **First launch:** right-click the app → **Open** → **Open** again in the dialog.
+   The app is ad-hoc signed (not notarized), so a normal double-click is blocked by Gatekeeper the first time only.
+   If macOS still refuses, clear the quarantine flag once:
+   ```bash
+   xattr -dr com.apple.quarantine /Applications/PortPilot.app
+   ```
+4. PortPilot opens a window and a 📡 menu-bar icon, and auto-starts at login. The current version is shown in the footer.
 
 ## Build & run
 ```bash
@@ -32,6 +39,16 @@ cd PortPilot
 ./scripts/build-app.sh && open PortPilot.app
 ```
 After launch you'll get the PortPilot window plus a 📡 icon in the menu bar (with a badge counting your services).
+
+## Releasing (versioning)
+The version lives in `scripts/Info.plist` (`CFBundleShortVersionString`) and is shown in the app footer.
+
+- **Locally (with a Mac):** one command bumps the version, builds, zips, tags, and publishes:
+  ```bash
+  ./scripts/release.sh 1.0.1
+  ```
+- **From GitHub (no Mac needed):** Actions tab → **Build & Release** → Run workflow → enter the version.
+  It builds on a macOS runner and publishes the release. (Use one path or the other, not both for the same version.)
 
 ## Uninstall
 ```bash

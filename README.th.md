@@ -20,9 +20,16 @@
 - freshness indicator "updated Ns ago" + error banner ที่ปิดได้
 - ปุ่ม action enable เฉพาะ process ของคุณ (`.user`) กันเผลอ kill Apple daemon
 
-## ดาวน์โหลด (ไม่ต้อง build เอง)
-โหลดไฟล์ `PortPilot.app.zip` จาก **[Releases](https://github.com/NATX0XD/PortPilot/releases/latest)** (Apple Silicon)
-→ แตก zip → ย้าย `PortPilot.app` เข้า `/Applications` → เปิดครั้งแรกให้คลิกขวา → **Open** (แอปเซ็นแบบ ad-hoc ยังไม่ notarize)
+## ดาวน์โหลด & ใช้งาน (ไม่ต้อง build เอง)
+1. ไปที่ **[Releases](https://github.com/NATX0XD/PortPilot/releases/latest)** โหลด `PortPilot-x.y.z.zip` (Apple Silicon)
+2. แตก zip แล้วย้าย **PortPilot.app** เข้า `/Applications`
+3. **เปิดครั้งแรก:** คลิกขวาที่แอป → **Open** → กด **Open** ซ้ำในกล่องที่เด้งมา
+   (แอปเซ็นแบบ ad-hoc ยังไม่ notarize เลยโดน Gatekeeper บล็อกเฉพาะครั้งแรก double-click)
+   ถ้ายังเปิดไม่ได้ ให้ล้าง quarantine ครั้งเดียว:
+   ```bash
+   xattr -dr com.apple.quarantine /Applications/PortPilot.app
+   ```
+4. เปิดแล้วจะมีหน้าต่าง + ไอคอน 📡 บน menu bar และ auto-start ตอน login. เวอร์ชันปัจจุบันโชว์ที่ footer
 
 ## วิธี build & run
 ```bash
@@ -32,6 +39,16 @@ cd PortPilot
 ./scripts/build-app.sh && open PortPilot.app
 ```
 หลังเปิดจะมีหน้าต่าง PortPilot + ไอคอน 📡 บน menu bar (มี badge นับจำนวน service ของคุณ)
+
+## การออกเวอร์ชัน (release)
+เวอร์ชันเก็บใน `scripts/Info.plist` (`CFBundleShortVersionString`) และโชว์ที่ footer ของแอป
+
+- **บนเครื่อง Mac:** คำสั่งเดียว bump version + build + zip + tag + publish:
+  ```bash
+  ./scripts/release.sh 1.0.1
+  ```
+- **บน GitHub (ไม่ต้องมี Mac):** แท็บ Actions → **Build & Release** → Run workflow → ใส่เวอร์ชัน
+  มันจะ build บน macOS runner แล้ว publish ให้ (เลือกใช้ทางใดทางหนึ่ง อย่าใช้ทั้งคู่กับเวอร์ชันเดียวกัน)
 
 ## ถอนการติดตั้ง
 ```bash

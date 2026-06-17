@@ -98,6 +98,10 @@ struct ContentView: View {
         .background(Capsule().fill(.quaternary))
     }
 
+    private var appVersion: String {
+        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
+    }
+
     private var freshnessString: String {
         if model.isScanning { return "scanning…" }
         guard let last = model.lastScan else { return "" }
@@ -209,6 +213,11 @@ struct ContentView: View {
             .toggleStyle(.switch)
             .controlSize(.mini)
             .help("Re-scan your services every 5s")
+
+            Spacer()
+
+            Text("v\(appVersion)")
+                .font(.caption2).foregroundStyle(.tertiary)
 
             Spacer()
 
